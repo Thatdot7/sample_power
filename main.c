@@ -6,7 +6,9 @@
 
 static const char *device = "/dev/spidev0.0";
 pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
+phtread_mutex_t mutex2 = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t data_ready = PTHREAD_COND_INITIALIZER;
+pthread_cond_t logging_ready = PTHREAD_COND_INITIALIZER;
 
 int main(int argc, char *argv[])
 {
