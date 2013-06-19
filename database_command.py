@@ -4,6 +4,8 @@ from crontab import CronTab
 
 def setup():
         cron = CronTab()
+	cron.remove_all("")
+	cron.write()
         job = cron.new(command='python /home/pi/sample_power/database_command.py hourly')
         job.minute.on(0)
         job = cron.new(command='python /home/pi/sample_power/database_command.py daily')
@@ -46,8 +48,8 @@ def setup():
 
 	for i in range(10000):
 		conn.execute("INSERT INTO real_time_record VALUES (\
-			" + str(i+1) + ", datetime(CURRENT_TIMESTAMP, \
-                        ), 0, 0 );")
+			" + str(i+1) + ", datetime(CURRENT_TIMESTAMP),\
+                         0, 0 );")
 
 	# Forming record of last 24 hours
 	#
@@ -62,8 +64,8 @@ def setup():
 
 	for i in range(24):
 		conn.execute("INSERT INTO last_24_hours VALUES (\
-			" + str(i+1) + ", datetime(CURRENT_TIMESTAMP, \
-                        '), 0);")
+			" + str(i+1) + ", datetime(CURRENT_TIMESTAMP),\
+                        0);")
 
 
         # Forming record of last 31 days
@@ -79,7 +81,7 @@ def setup():
 
 	for i in range(31):
 		conn.execute("INSERT INTO last_31_days VALUES (\
-			" + str(i+1) + ", datetime(CURRENT_TIMESTAMP, \
+			" + str(i+1) + ", datetime(CURRENT_TIMESTAMP\
                         ), 0);")
 
         # Monthly record of energy usage
@@ -160,10 +162,6 @@ def monthly():
         conn.commit()
         conn.close()
 
-def test():
-        
-        
-
 if __name__ == "__main__":
 	if sys.argv[1] == "setup":
 		setup()
@@ -173,5 +171,3 @@ if __name__ == "__main__":
                 daily()
         elif sys.argv[1] == "monthly":
                 monthly()
-        elif sys.argv[1] == "test":
-                test()

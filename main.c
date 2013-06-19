@@ -6,9 +6,7 @@
 
 static const char *device = "/dev/spidev0.0";
 pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
-phtread_mutex_t mutex2 = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t data_ready = PTHREAD_COND_INITIALIZER;
-pthread_cond_t logging_ready = PTHREAD_COND_INITIALIZER;
 
 int main(int argc, char *argv[])
 {
@@ -32,10 +30,9 @@ int main(int argc, char *argv[])
 
 		pthread_cond_signal( &data_ready);
 		pthread_mutex_unlock( &mutex1);
-		//printf("j++\n");
+		//printf("%d\t%d\n", sample_buffer.V[0], sample_buffer.I[0]);
 	}
 	close(fd);
-
 	return 0;
 
 }

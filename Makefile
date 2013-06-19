@@ -1,7 +1,7 @@
 all: test_sample
 
 test_sample: *o
-	gcc *o -o test_sample -lpthread
+	gcc *o -o test_sample -lpthread -lsqlite3
 
 *o: *c
 	gcc -c *c
