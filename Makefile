@@ -1,16 +1,10 @@
 all: test_sample
 
-test_sample: main.o setup.o calculation.o
+test_sample: *o
 	gcc *o -o test_sample -lpthread
 
-main.o: main.c
-	gcc -c main.c
-
-setup.o: setup.c
-	gcc -c setup.c
-
-calculation.o: calculation.c
-	gcc -c calculation.c
+*o: *c
+	gcc -c *c
 
 clean:
 	rm -rf *o test_sample

@@ -31,16 +31,16 @@ static uint8_t bits = 8;
 static uint32_t speed = 1000000;
 static uint16_t delay = 1;
 
-int transfer(int fd, int adc_channel)
+unsigned int transfer(int fd, int adc_channel)
 {
 	int ret;
-	uint8_t tx[2];
+	uint8_t tx[] = {0x00, 0x00};
 	
 	if ( adc_channel == 0 )
 	{
-		//tx = { 0x60, 0x00 };
+		tx[0] = 0x60;
 	} else {
-		//tx = { 0x70, 0x00 };
+		tx[0] = 0x70;
 	}
 
 	uint8_t rx[ARRAY_SIZE(tx)] = {0, };
@@ -57,5 +57,7 @@ int transfer(int fd, int adc_channel)
 	if (ret < 1)
 		pabort("can't send spi message");
 
-	int data = (unsigned int) (rx[0] & 0x03) << 8 | (unsigned int) rx[1];
+	unsigned int data = (unsigned int) (rx[0]) << 8 | (unsigned int) rx[1];
+
+	return data;
 }
