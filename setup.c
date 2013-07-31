@@ -17,6 +17,7 @@
 #include <sys/ioctl.h>
 #include <linux/types.h>
 #include <linux/spi/spidev.h>
+#include <fcntl.h>
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 
@@ -26,9 +27,8 @@ static void pabort(const char *s)
 	abort();
 }
 
-static uint8_t mode;
 static uint8_t bits = 8;
-static uint32_t speed = 500000;
+static uint32_t speed = 1000000;
 static uint16_t delay = 1;
 
 int transfer(int fd, int adc_channel)
@@ -58,44 +58,4 @@ int transfer(int fd, int adc_channel)
 		pabort("can't send spi message");
 
 	int data = (unsigned int) (rx[0] & 0x03) << 8 | (unsigned int) rx[1];
-}
-
-int setup_chip(int fd)
-{
-	int ret = 0;
-	
-	/*
-	 * spi mode
-	 */
-	ret = ioctl(fd, SPI_IOC_WR_MODE, &mode);
-	if (ret == -1)
-		pabort("can't set spi mode");
-
-	ret = ioctl(fd, SPI_IOC_RD_MODE, &mode);
-	if (ret == -1)
-		pabort("can't get spi mode");
-
-	/*
-	 * bits per word
-	 */
-	ret = ioctl(fd, SPI_IOC_WR_BITS_PER_WORD, &bits);
-	if (ret == -1)
-		pabort("can't set bits per word");
-
-	ret = ioctl(fd, SPI_IOC_RD_BITS_PER_WORD, &bits);
-	if (ret == -1)
-		pabort("can't get bits per word");
-
-	/*
-	 * max speed hz
-	 */
-	ret = ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
-	if (ret == -1)
-		pabort("can't set max speed hz");
-
-	ret = ioctl(fd, SPI_IOC_RD_MAX_SPEED_HZ, &speed);
-	if (ret == -1)
-		pabort("can't get max speed hz");
-
-	return ret;
 }
