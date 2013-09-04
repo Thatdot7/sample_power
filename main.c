@@ -3,6 +3,8 @@
 #include <pthread.h>
 #include <string.h>
 #include <stdio.h>
+#include <sys/time.h>
+#include <math.h>
 
 static const char *device = "/dev/spidev0.0";
 pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
@@ -18,14 +20,21 @@ int main(int argc, char *argv[])
 
 	pthread_create( &calc_process, NULL, calculation_thread, (void*) &sample_buffer);
 
-	for( j = 0; j < 100000; j++)
+	struct timeval x;
+
+	for( j = 0; j < 10000; j++)
 	{
 		pthread_mutex_lock( &mutex1 );
 		for ( i=0; i < SAMPLE_SIZE; i++)
 		{
+			gettimeofday(&x, 0);
+			double y = (double)x.tv_sec + (double) x.tv_usec / 1e6;
 			sample_buffer.V[i] = transfer(fd, 0);
 			sample_buffer.I[i] = transfer(fd, 1);
-			usleep(250);
+
+			//sample_buffer.V[i] = (unsigned int) (500 * sin(0.5*y) + 512);
+			//sample_buffer.I[i] = 513;
+			usleep(150);
 		}
 
 		pthread_cond_signal( &data_ready);

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sqlite3.h>
+#include <sys/time.h>
 
 extern pthread_mutex_t mutex2;
 extern pthread_cond_t logging_ready;
@@ -23,9 +24,9 @@ void *logging_thread(void *logging_array)
 
 	sqlite3 *db;
 	char *sql;
+	char sql_update[400];
 	char *zErrMsg = 0;
 	int rc;
-
 
 	rc = sqlite3_open("test.db", &db);
 
@@ -37,16 +38,16 @@ void *logging_thread(void *logging_array)
 		pthread_mutex_unlock( &mutex2 );
 
 		real_power = 0;
-		energy = 0;
 
-		for( i=0; i<PROCESSING_SIZE; i++)
+		for( i=1; i<PROCESSING_SIZE; i++)
 		{
 			real_power += log_data.real_power[i];
 			energy += log_data.energy[i];
 		}
 
-		real_power = real_power / PROCESSING_SIZE;
-		
+		real_power = real_power / (PROCESSING_SIZE);
+
+
 		sql = "SELECT counter FROM row_counters WHERE (table_name = 'real_time_record');";
 		rc = sqlite3_exec(db, sql, callback, NULL, &zErrMsg);
 
@@ -55,7 +56,16 @@ void *logging_thread(void *logging_array)
 			printf("SQL error: %s\n", zErrMsg);
 			sqlite3_free(zErrMsg);
 		}
-		printf("%f\t%d\n", real_power, count);
+
+		sprintf(sql_update, "UPDATE real_time_record SET time = datetime(CURRENT_TIMESTAMP), real_power = %f, energy = %f WHERE rowID = %d;", real_power, energy, count);
+		rc = sqlite3_exec(db, sql_update, NULL, NULL, NULL);
+
+		if(count > 9999){
+			count = 0;
+		}
+
+		sprintf(sql_update, "UPDATE row_counters SET counter = %d WHERE (table_name = 'real_time_record');", (count+1));
+		rc = sqlite3_exec(db, sql_update, NULL, NULL, NULL);
 	}
 	
 }

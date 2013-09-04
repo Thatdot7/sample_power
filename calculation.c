@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <string.h>
+#include <time.h>
 #include <sys/time.h>
 
 extern pthread_mutex_t mutex1;
@@ -15,18 +16,17 @@ void *calculation_thread(void *sample)
 	sample_struct sample_temp;
 	int i;
 	int count = 0;
-	float real_power;
-	float energy;
-	float temp;
-
-	struct timeval current_time;
-	long int time_stamp;
-	
-	gettimeofday(&current_time, 0);
-	long int prev_time = current_time.tv_sec * 1000000 + current_time.tv_usec;
+	double real_power;
+	double energy;
 
 	pthread_t log_process;
 	pthread_create( &log_process, NULL, logging_thread, (void *) &log );
+
+	FILE *f = fopen("data.csv", "a+");
+
+	struct timeval current_time;
+	gettimeofday(&current_time, NULL);
+	double prev_time = (double) current_time.tv_sec + (double) current_time.tv_usec /1e6;
 
 	while(1)
 	{
@@ -35,32 +35,40 @@ void *calculation_thread(void *sample)
 		memcpy(&sample_temp, sample, sizeof(sample_struct));
 		pthread_mutex_unlock( &mutex1 );
 
-		real_power = 0;
-
 		for( i=0; i < SAMPLE_SIZE; i++)
 		{
-			real_power += ((double) sample_temp.V[i] * (double) sample_temp.I[i]);
+			real_power += ((double) sample_temp.V[i] - 502) * 3.3 / 1024 * 241.702 * ((double) sample_temp.I[i] - 508) * 3.3 / 1024 * 9.327;
 		}
 
-		pthread_mutex_lock( &mutex2 );
-		log.real_power[count] = real_power / SAMPLE_SIZE;
-		
+		real_power = real_power / SAMPLE_SIZE;
 		gettimeofday(&current_time, NULL);
-		time_stamp = current_time.tv_sec * 1000000 + current_time.tv_usec;
+		double time_stamp = (double) current_time.tv_sec + current_time.tv_usec / 1e6;
+		energy = real_power * (time_stamp - prev_time);
 
-		log.energy[count] = real_power * (time_stamp - prev_time) / 1000000;
+		pthread_mutex_lock( &mutex2 );
+		log.real_power[count] = real_power;
+		log.energy[count] = energy;
 
 		if (count >= PROCESSING_SIZE)
 		{
 			count = 0;
+			//printf("BATCH SENT\n");
 			pthread_cond_signal( &logging_ready);
-
+			
 		} else {
 			count++;
 		}
 		pthread_mutex_unlock( &mutex2 );
+
+		// Print debug statements
+		//printf("Real Power = %f\tEnergy = %f\tV = %d-%d\tTime = %f\n", log.real_power[count-1], log.energy[count-1], 
+		//		sample_temp.V[0], sample_temp.V[SAMPLE_SIZE-1], (time_stamp - prev_time));
+		fprintf(f, "%f, %d, %d\n", time_stamp, sample_temp.V[0], sample_temp.I[0]);
 		//printf("Ch1 = %d\tCh2 = %d\n", sample_temp.V[0], sample_temp.I[0]);
-		//printf("Real Power = %f\tEnergy = %f\n", log.real_power[count-1], log.energy[count-1]);
+		
+		// Setting up variables for next round
+		real_power = 0;
+		prev_time = time_stamp;
 	}
 }
 
